@@ -1,0 +1,6 @@
+.mounted/**
+/Downloads/**
+/Trash/**
+/DVR/**
+*DS_Store
+.plexignore

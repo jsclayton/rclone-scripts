@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+set -e
+
+RCLONE=/usr/bin/rclone
+
+available() {
+  df -B G --output=avail "${1}" | grep -v Avail | sed 's/[^0-9]*//g'
+}
+
+CACHE=$1
+BACKING=$2
+MIN_FREE_SPACE=$3
+AVAIL=`available $CACHE`
+
+if [ $AVAIL -gt $MIN_FREE_SPACE ]
+then
+  echo "${AVAIL}GB available on ${CACHE}, ${MIN_FREE_SPACE}GB required. Nothing to do!"
+  exit 0
+fi
+
+echo "${AVAIL}GB available on ${CACHE}, ${MIN_FREE_SPACE}GB required."
+while [ `available $CACHE` -lt $MIN_FREE_SPACE ]
+do
+  FILE=`find ${CACHE} -type f -not -path "*.mounted/*" -printf '%A@ %P\n' | sort | head -n 1 | cut -d ' ' -f 2-`
+  if [ -z "$FILE" ]; then
+    echo "Nothing to do"
+    break
+  fi
+  SRC_PATH="${CACHE}/${FILE}"
+  DST_PATH="${BACKING}/${FILE}"
+  $RCLONE moveto "${SRC_PATH}" "${DST_PATH}" -v --stats 0 --syslog
+  find "`dirname "${SRC_PATH}"`" -empty -type d -delete
+done
+

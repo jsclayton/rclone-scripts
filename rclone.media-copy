@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+RCLONE=/usr/bin/rclone
+DIR="$(dirname "$(readlink -f "$0")")"
+
+$RCLONE --version
+
+SRC=$1
+DST=$2
+
+# TODO: Make sure these are directories and they exist
+echo "Working directory: $DIR"
+echo "Source: $SRC"
+echo "Destination: $DST"
+
+# TODO: ionice?
+$RCLONE copy "$SRC" "$DST" \
+  -v \
+  --stats 0 \
+  --fast-list \
+  --exclude-from "$DIR/exclusions"
+
